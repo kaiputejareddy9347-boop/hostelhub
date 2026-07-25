@@ -1,6 +1,6 @@
 // HostelHub Central API Client
 
-const API_BASE_URL = `http://${window.location.hostname}:8080/api`;
+const API_BASE_URL = `https://hostelhub-production-fa7a.up.railway.app/api`;
 
 // Helper to get authorization headers
 function getHeaders() {
