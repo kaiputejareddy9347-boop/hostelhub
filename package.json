@@ -1,0 +1,10 @@
+{
+  "name": "hostelhub",
+  "version": "1.0.0",
+  "description": "HostelHub Project Root",
+  "scripts": {
+    "frontend": "node server.js",
+    "backend:build": "powershell -ExecutionPolicy Bypass -File .\\mvn.ps1 -f backend/pom.xml clean package -DskipTests",
+    "backend:run": "powershell -ExecutionPolicy Bypass -File .\\mvn.ps1 -f backend/pom.xml spring-boot:run"
+  }
+}
