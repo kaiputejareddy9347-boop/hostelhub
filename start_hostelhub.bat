@@ -13,8 +13,8 @@ netstat -ano | findstr :8080 > nul
 if %errorlevel% equ 0 (
     echo [WARNING] Port 8080 is already in use. Assuming Backend is running.
 ) else (
-    echo [INFO] Starting Backend Spring Boot Server (Port 8080)...
-    start "HostelHub Backend" /min powershell -ExecutionPolicy Bypass -File .\mvn.ps1 -f backend/pom.xml spring-boot:run
+    echo [INFO] Starting Backend Express Server (Port 8080)...
+    start "HostelHub Backend" /min cmd /c npm run dev:backend
 )
 
 :: Start Frontend if not already running
@@ -22,8 +22,8 @@ netstat -ano | findstr :3000 > nul
 if %errorlevel% equ 0 (
     echo [WARNING] Port 3000 is already in use. Assuming Frontend is running.
 ) else (
-    echo [INFO] Starting Frontend Node.js Server (Port 3000)...
-    start "HostelHub Frontend" /min cmd /c node server.js
+    echo [INFO] Starting Frontend React + Vite Server (Port 3000)...
+    start "HostelHub Frontend" /min cmd /c npm run dev:frontend
 )
 
 echo.

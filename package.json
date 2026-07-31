@@ -1,10 +1,18 @@
 {
   "name": "hostelhub",
   "version": "1.0.0",
-  "description": "HostelHub Project Root",
+  "description": "HostelHub Monorepo Root",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
-    "frontend": "node server.js",
-    "backend:build": "powershell -ExecutionPolicy Bypass -File .\\mvn.ps1 -f backend/pom.xml clean package -DskipTests",
-    "backend:run": "powershell -ExecutionPolicy Bypass -File .\\mvn.ps1 -f backend/pom.xml spring-boot:run"
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build": "prisma generate --schema=backend/prisma/schema.prisma && npm --prefix frontend run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }

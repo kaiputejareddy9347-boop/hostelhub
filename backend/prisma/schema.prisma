@@ -1,0 +1,202 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  STUDENT
+  OWNER
+  ADMIN
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+model User {
+  id         Int         @id @default(autoincrement())
+  username   String      @unique
+  email      String      @unique
+  password   String
+  role       Role
+  name       String
+  phone      String?
+  createdAt  DateTime    @default(now()) @map("created_at")
+  hostels    Hostel[]    @relation("OwnerHostels")
+  bookings   Booking[]   @relation("StudentBookings")
+  complaints Complaint[]
+  reviews    Review[]
+
+  @@map("users")
+}
+
+model Hostel {
+  id            Int         @id @default(autoincrement())
+  ownerId       Int         @map("owner_id")
+  owner         User        @relation("OwnerHostels", fields: [ownerId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?
+  address       String
+  city          String
+  contactNumber String?     @map("contact_number")
+  isVerified    Boolean     @default(false) @map("is_verified")
+  upiId         String?     @map("upi_id")
+  bankAccount   String?     @map("bank_account")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  rooms         Room[]
+  facilities    Facility[]  @relation("HostelFacilities")
+  images        Image[]
+  complaints    Complaint[]
+  reviews       Review[]
+  notices       Notice[]
+
+  @@map("hostels")
+}
+
+model Room {
+  id            Int        @id @default(autoincrement())
+  hostelId      Int        @map("hostel_id")
+  hostel        Hostel     @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  roomNumber    String     @map("room_number")
+  roomType      String     @map("room_type")
+  capacity      Int
+  pricePerMonth Decimal    @map("price_per_month") @db.Decimal(10, 2)
+  status        RoomStatus @default(AVAILABLE)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  bookings      Booking[]
+
+  @@map("rooms")
+}
+
+model Booking {
+  id          Int           @id @default(autoincrement())
+  studentId   Int           @map("student_id")
+  student     User          @relation("StudentBookings", fields: [studentId], references: [id], onDelete: Cascade)
+  roomId      Int           @map("room_id")
+  room        Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  bookingDate DateTime      @default(now()) @map("booking_date")
+  startDate   DateTime      @map("start_date")
+  endDate     DateTime      @map("end_date")
+  status      BookingStatus @default(PENDING)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  invoices    Invoice[]
+  payments    Payment[]
+
+  @@map("bookings")
+}
+
+model Invoice {
+  id           Int           @id @default(autoincrement())
+  bookingId    Int           @map("booking_id")
+  booking      Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount       Decimal       @db.Decimal(10, 2)
+  dueDate      DateTime      @map("due_date")
+  status       InvoiceStatus @default(PENDING)
+  billingMonth String        @map("billing_month")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  payments     Payment[]
+
+  @@map("invoices")
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  bookingId     Int           @map("booking_id")
+  booking       Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  invoiceId     Int?          @map("invoice_id")
+  invoice       Invoice?      @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentDate   DateTime      @default(now()) @map("payment_date")
+  paymentMethod String        @map("payment_method")
+  status        PaymentStatus @default(PENDING)
+  transactionId String?       @unique @map("transaction_id")
+
+  @@map("payments")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  studentId Int      @map("student_id")
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  hostelId  Int      @map("hostel_id")
+  hostel    Hostel   @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("reviews")
+}
+
+model Complaint {
+  id          Int             @id @default(autoincrement())
+  studentId   Int             @map("student_id")
+  student     User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  hostelId    Int             @map("hostel_id")
+  hostel      Hostel          @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  status      ComplaintStatus @default(OPEN)
+  ownerReply  String?         @map("owner_reply")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  @@map("complaints")
+}
+
+model Notice {
+  id        Int      @id @default(autoincrement())
+  hostelId  Int      @map("hostel_id")
+  hostel    Hostel   @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notices")
+}
+
+model Facility {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  hostels Hostel[] @relation("HostelFacilities")
+
+  @@map("facilities")
+}
+
+model Image {
+  id        Int      @id @default(autoincrement())
+  hostelId  Int      @map("hostel_id")
+  hostel    Hostel   @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  imageUrl  String   @map("image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("images")
+}

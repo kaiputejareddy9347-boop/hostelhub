@@ -22,3 +22,6 @@ build-tools/
 temp/
 tmp/
 .DS_Store
+
+.vercel
+.env*
