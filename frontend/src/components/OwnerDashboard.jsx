@@ -60,6 +60,10 @@ function OwnerDashboard() {
   // 6. Invoices Filter State
   const [selectedHostelFilter, setSelectedHostelFilter] = useState('ALL');
 
+  // 7. Expenses Management State
+  const [selectedExpenseHostel, setSelectedExpenseHostel] = useState('ALL');
+  const [expenseCategory, setExpenseCategory] = useState('Power Bill');
+
   const calculateTotalVacancies = (hostel) => {
     if (!hostel.rooms) return 0;
     return hostel.rooms.reduce((acc, room) => {
@@ -92,6 +96,9 @@ function OwnerDashboard() {
     try {
       const hostelsData = await Api.hostels.getOwnerHostels();
       setHostels(hostelsData);
+      if (hostelsData && hostelsData.length > 0 && selectedExpenseHostel === 'ALL') {
+        setSelectedExpenseHostel(hostelsData[0].id.toString());
+      }
 
       const bookingsData = await Api.bookings.getOwnerBookings();
       setBookings(bookingsData);
@@ -243,7 +250,7 @@ function OwnerDashboard() {
     try {
       await Api.hostels.addExpense(hostelId, {
         amount: parseFloat(expenseAmount),
-        description: expenseDesc
+        description: `[${expenseCategory}] ${expenseDesc}`
       });
       setExpenseAmount('');
       setExpenseDesc('');
@@ -341,7 +348,13 @@ function OwnerDashboard() {
           className={`sidebar-link ${activeTab === 'finances' ? 'active' : ''}`}
           onClick={() => setActiveTab('finances')}
         >
-          <DollarSign size={18} /> Expenses & Profits
+          <DollarSign size={18} /> Profits
+        </div>
+        <div 
+          className={`sidebar-link ${activeTab === 'expenses' ? 'active' : ''}`}
+          onClick={() => setActiveTab('expenses')}
+        >
+          <CreditCard size={18} /> Expenses
         </div>
         <div 
           className={`sidebar-link ${activeTab === 'bookings' ? 'active' : ''}`}
@@ -353,13 +366,13 @@ function OwnerDashboard() {
           className={`sidebar-link ${activeTab === 'invoices' ? 'active' : ''}`}
           onClick={() => setActiveTab('invoices')}
         >
-          <CreditCard size={18} /> Bills & Payments
+          <Home size={18} /> Bills & Payments
         </div>
         <div 
           className={`sidebar-link ${activeTab === 'complaints' ? 'active' : ''}`}
           onClick={() => setActiveTab('complaints')}
         >
-          <MessageSquare size={18} /> Help & Support
+          <MessageSquare size={18} /> Complaints
         </div>
       </aside>
 
@@ -505,62 +518,6 @@ function OwnerDashboard() {
                               })}
                             </div>
                           )}
-                          {/* Expenses Ledger Section */}
-                          <div style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px dashed var(--border-color)' }}>
-                            <h4 style={{ marginBottom: '15px', fontSize: '14px', fontWeight: 600, color: 'var(--danger)' }}>
-                              💸 Property Expenses Ledger
-                            </h4>
-
-                            {/* Expenses List */}
-                            {!h.expenses || h.expenses.length === 0 ? (
-                              <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '15px' }}>No expenses recorded for this property yet.</p>
-                            ) : (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px' }}>
-                                {h.expenses.map(exp => (
-                                  <div key={exp.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.01)', padding: '10px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontSize: '13px' }}>
-                                    <div>
-                                      <strong style={{ color: 'white' }}>{exp.description}</strong>
-                                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{new Date(exp.date).toLocaleDateString()}</div>
-                                    </div>
-                                    <div style={{ fontWeight: 700, color: 'var(--danger)' }}>- ₹{exp.amount}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Add Expense Form */}
-                            <form onSubmit={(e) => handleExpenseSubmit(e, h.id)} style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                              <h5 style={{ marginBottom: '10px', fontSize: '12px', color: 'white', fontWeight: 600 }}>Record a New Expense</h5>
-                              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '10px', alignItems: 'end' }}>
-                                <div className="form-group" style={{ marginBottom: 0 }}>
-                                  <input 
-                                    type="text" 
-                                    className="form-control"
-                                    style={{ height: '38px', fontSize: '13px' }}
-                                    placeholder="Description (e.g. Electricity, Water)"
-                                    required
-                                    value={expenseDesc}
-                                    onChange={e => setExpenseDesc(e.target.value)}
-                                  />
-                                </div>
-                                <div className="form-group" style={{ marginBottom: 0 }}>
-                                  <input 
-                                    type="number" 
-                                    className="form-control"
-                                    style={{ height: '38px', fontSize: '13px' }}
-                                    placeholder="Amount (₹)"
-                                    required
-                                    min="1"
-                                    value={expenseAmount}
-                                    onChange={e => setExpenseAmount(e.target.value)}
-                                  />
-                                </div>
-                                <button type="submit" className="btn btn-primary" style={{ height: '38px', fontSize: '12px', justifyContent: 'center' }}>
-                                  Add
-                                </button>
-                              </div>
-                            </form>
-                          </div>
                         </div>
                       )}
                     </div>
@@ -838,6 +795,141 @@ function OwnerDashboard() {
             </div>
           )}
 
+        {/* Expenses Tab */}
+        {activeTab === 'expenses' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+              <h2 style={{ marginBottom: 0 }}>Monthly Expenses Tracker</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label htmlFor="hostelExpenseSelect" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Select Property:</label>
+                <select
+                  id="hostelExpenseSelect"
+                  className="form-control form-select"
+                  style={{ width: '220px', height: '36px', padding: '0 10px', fontSize: '13px', margin: 0, background: '#181524' }}
+                  value={selectedExpenseHostel}
+                  onChange={e => setSelectedExpenseHostel(e.target.value)}
+                >
+                  <option value="ALL" disabled={hostels.length > 0}>-- Select a Property --</option>
+                  {hostels.map(h => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {selectedExpenseHostel === 'ALL' || !hostels.find(h => h.id === parseInt(selectedExpenseHostel)) ? (
+              <p style={{ color: 'var(--text-muted)' }}>Please select a property from the dropdown above to view and record expenses.</p>
+            ) : (() => {
+              const selectedHostelObj = hostels.find(h => h.id === parseInt(selectedExpenseHostel));
+              const expensesForHostel = selectedHostelObj ? (selectedHostelObj.expenses || []) : [];
+              
+              // Group expenses by Month/Year
+              const expensesByMonth = expensesForHostel.reduce((acc, exp) => {
+                const date = new Date(exp.date);
+                const monthYear = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                if (!acc[monthYear]) acc[monthYear] = [];
+                acc[monthYear].push(exp);
+                return acc;
+              }, {});
+
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '30px', alignItems: 'start' }}>
+                  {/* Left Column: Add Expense Form */}
+                  <div className="booking-card" style={{ margin: 0 }}>
+                    <h3 style={{ marginBottom: '15px', fontSize: '16px' }}>Record a New Expense</h3>
+                    <form onSubmit={(e) => handleExpenseSubmit(e, selectedHostelObj.id)}>
+                      <div className="form-group">
+                        <label htmlFor="expCategory">Category</label>
+                        <select
+                          id="expCategory"
+                          className="form-control form-select"
+                          value={expenseCategory}
+                          onChange={e => setExpenseCategory(e.target.value)}
+                          required
+                        >
+                          <option value="Power Bill">⚡ Power Bill</option>
+                          <option value="Maintenance Bill">🔧 Maintenance Bill</option>
+                          <option value="Cleaning">🧹 Cleaning / Laundry</option>
+                          <option value="Food & Mess">🍽️ Food & Mess</option>
+                          <option value="Internet">🌐 Internet / WiFi</option>
+                          <option value="Water">🚰 Water Bill</option>
+                          <option value="Rent">🏢 Ground Rent</option>
+                          <option value="Others">Others / Miscellaneous</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="expDesc">Description</label>
+                        <input
+                          type="text"
+                          id="expDesc"
+                          className="form-control"
+                          placeholder="e.g. Electric meter reading"
+                          required
+                          value={expenseDesc}
+                          onChange={e => setExpenseDesc(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="expAmt">Amount (₹)</label>
+                        <input
+                          type="number"
+                          id="expAmt"
+                          className="form-control"
+                          placeholder="Enter amount"
+                          required
+                          min="1"
+                          value={expenseAmount}
+                          onChange={e => setExpenseAmount(e.target.value)}
+                        />
+                      </div>
+
+                      <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '10px' }}>
+                        Add Expense
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Right Column: Monthly Ledgers */}
+                  <div>
+                    <h3 style={{ marginBottom: '15px', fontSize: '18px' }}>Expenses History</h3>
+                    {Object.keys(expensesByMonth).length === 0 ? (
+                      <p style={{ color: 'var(--text-muted)' }}>No expenses recorded for this property yet.</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                        {Object.keys(expensesByMonth).map(monthYear => {
+                          const monthExpenses = expensesByMonth[monthYear];
+                          const monthTotal = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+                          return (
+                            <div key={monthYear} className="room-item-card" style={{ flexDirection: 'column', alignItems: 'stretch', padding: '20px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px dashed rgba(255,255,255,0.1)', paddingBottom: '8px' }}>
+                                <h4 style={{ fontSize: '15px', fontWeight: 700, margin: 0 }}>📅 {monthYear}</h4>
+                                <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--danger)' }}>Total: ₹{monthTotal}</span>
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {monthExpenses.map(exp => (
+                                  <div key={exp.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.01)', padding: '10px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontSize: '13px' }}>
+                                    <div>
+                                      <strong style={{ color: 'white' }}>{exp.description}</strong>
+                                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{new Date(exp.date).toLocaleDateString()}</div>
+                                    </div>
+                                    <div style={{ fontWeight: 700, color: 'var(--danger)' }}>- ₹{exp.amount}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
         {/* 2. Room Bookings Tab */}
         {activeTab === 'bookings' && (
           <div>
@@ -918,103 +1010,82 @@ function OwnerDashboard() {
         {/* 3. Invoices Tab */}
         {activeTab === 'invoices' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
-              <h2 style={{ marginBottom: 0 }}>Bills & Payments</h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <label htmlFor="hostelSelectFilter" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Filter by Property:</label>
-                <select
-                  id="hostelSelectFilter"
-                  className="form-control form-select"
-                  style={{ width: '220px', height: '36px', padding: '0 10px', fontSize: '13px', margin: 0, background: '#181524' }}
-                  value={selectedHostelFilter}
-                  onChange={e => setSelectedHostelFilter(e.target.value)}
-                >
-                  <option value="ALL">All Properties</option>
-                  {hostels.map(h => (
-                    <option key={h.id} value={h.id}>{h.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            <h2 style={{ marginBottom: '20px' }}>Bills & Payments</h2>
             
             {invoices.length === 0 ? (
               <p style={{ color: 'var(--text-muted)' }}>No bills generated yet.</p>
             ) : (
-              <div className="table-container">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Tenant</th>
-                      <th>Billing Month</th>
-                      <th>Amount</th>
-                      <th>Due Date</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(() => {
-                      const filteredInvoices = selectedHostelFilter === 'ALL' 
-                        ? invoices 
-                        : invoices.filter(inv => inv.booking.room.hostelId === parseInt(selectedHostelFilter));
-                      
-                      if (filteredInvoices.length === 0) {
-                        return (
-                          <tr>
-                            <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>
-                              No bills found for this property.
-                            </td>
-                          </tr>
-                        );
-                      }
+              hostels.map(hostel => {
+                const hostelInvoices = invoices.filter(inv => inv.booking.room.hostelId === hostel.id);
+                if (hostelInvoices.length === 0) return null;
 
-                      return filteredInvoices.map((inv) => (
-                        <tr key={inv.id}>
-                        <td>
-                          <strong>{inv.booking.student.name}</strong>
-                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{inv.booking.room.hostel.name} | Room {inv.booking.room.roomNumber}</div>
-                        </td>
-                        <td style={{ fontWeight: 600 }}>{inv.billingMonth}</td>
-                        <td>₹{inv.amount}</td>
-                        <td>{new Date(inv.dueDate).toLocaleDateString()}</td>
-                        <td>
-                          <span className={`status-pill ${inv.status === 'PAID' ? 'status-available' : 'status-pending'}`}>
-                            {inv.status}
-                          </span>
-                          {inv.status === 'PAID' && inv.payments && inv.payments[0] && (
-                            <div style={{ fontSize: '11px', marginTop: '6px', color: 'var(--text-secondary)', textAlign: 'left' }}>
-                              {inv.payments[0].transactionId && !inv.payments[0].transactionId.startsWith('TXN-PENDING-') && !inv.payments[0].transactionId.startsWith('TXN-CASH-') && (
-                                <div style={{ wordBreak: 'break-all' }}>Ref: <strong style={{ color: 'white' }}>{inv.payments[0].transactionId}</strong></div>
-                              )}
-                              {inv.payments[0].screenshot && (
-                                <button
-                                  onClick={() => setViewScreenshotUrl(inv.payments[0].screenshot)}
-                                  className="btn btn-outline"
-                                  style={{ padding: '2px 6px', fontSize: '10px', marginTop: '4px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
-                                >
-                                  🖼️ View Screenshot
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </td>
-                        <td>
-                          {inv.status === 'PENDING' && (
-                            <button 
-                              onClick={() => setActiveInvoiceForPayment(inv)}
-                              className="btn btn-secondary" 
-                              style={{ padding: '6px 12px', fontSize: '11px' }}
-                            >
-                              💵 Record Cash
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ));
-                  })()}
-                  </tbody>
-                </table>
-              </div>
+                return (
+                  <div key={hostel.id} style={{ marginBottom: '40px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--primary-color)', marginBottom: '15px', borderBottom: '1px dashed var(--border-color)', paddingBottom: '8px' }}>
+                      {hostel.type === 'MESS' ? '🍽️' : '🏢'} {hostel.name} Bills
+                    </h3>
+                    <div className="table-container" style={{ marginTop: 0 }}>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Tenant / Room</th>
+                            <th>Billing Month</th>
+                            <th>Amount</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {hostelInvoices.map(inv => (
+                            <tr key={inv.id}>
+                              <td>
+                                <strong>{inv.booking.student.name}</strong>
+                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{hostel.type === 'MESS' ? 'Plan' : 'Room'} {inv.booking.room.roomNumber} ({inv.booking.room.roomType})</div>
+                              </td>
+                              <td style={{ fontWeight: 600 }}>{inv.billingMonth}</td>
+                              <td>₹{inv.amount}</td>
+                              <td>{new Date(inv.dueDate).toLocaleDateString()}</td>
+                              <td>
+                                <span className={`status-pill ${inv.status === 'PAID' ? 'status-available' : 'status-pending'}`}>
+                                  {inv.status}
+                                </span>
+                                {inv.status === 'PAID' && inv.payments && inv.payments[0] && (
+                                  <div style={{ fontSize: '11px', marginTop: '6px', color: 'var(--text-secondary)', textAlign: 'left' }}>
+                                    {inv.payments[0].transactionId && !inv.payments[0].transactionId.startsWith('TXN-PENDING-') && !inv.payments[0].transactionId.startsWith('TXN-CASH-') && (
+                                      <div style={{ wordBreak: 'break-all' }}>Ref: <strong style={{ color: 'white' }}>{inv.payments[0].transactionId}</strong></div>
+                                    )}
+                                    {inv.payments[0].screenshot && (
+                                      <button
+                                        onClick={() => setViewScreenshotUrl(inv.payments[0].screenshot)}
+                                        className="btn btn-outline"
+                                        style={{ padding: '2px 6px', fontSize: '10px', marginTop: '4px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                                      >
+                                        🖼️ View Screenshot
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                              <td>
+                                {inv.status === 'PENDING' && (
+                                  <button 
+                                    onClick={() => setActiveInvoiceForPayment(inv)}
+                                    className="btn btn-secondary" 
+                                    style={{ padding: '6px 12px', fontSize: '11px' }}
+                                  >
+                                    💵 Record Cash
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         )}

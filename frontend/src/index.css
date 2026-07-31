@@ -521,7 +521,7 @@ a {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
-    overflow: hidden;
+    overflow-x: auto;
     margin-top: 20px;
 }
 

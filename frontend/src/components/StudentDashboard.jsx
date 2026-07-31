@@ -165,7 +165,7 @@ function StudentDashboard() {
           className={`sidebar-link ${activeTab === 'complaints' ? 'active' : ''}`}
           onClick={() => setActiveTab('complaints')}
         >
-          <AlertCircle size={18} /> Help & Support
+          <AlertCircle size={18} /> Complaints
         </div>
       </aside>
 
