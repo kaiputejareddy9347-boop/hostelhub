@@ -51,7 +51,17 @@ export const getStudentBookings = async (req, res) => {
       include: {
         room: {
           include: {
-            hostel: true
+            hostel: {
+              include: {
+                owner: {
+                  select: {
+                    name: true,
+                    email: true,
+                    phone: true
+                  }
+                }
+              }
+            }
           }
         }
       }

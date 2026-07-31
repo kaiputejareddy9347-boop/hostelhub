@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Api from '../services/api.js';
-import { Home, ClipboardList, CreditCard, MessageSquare, PlusCircle } from 'lucide-react';
+import { Home, ClipboardList, CreditCard, MessageSquare, PlusCircle, Building2, DollarSign } from 'lucide-react';
 
 function OwnerDashboard() {
   const [activeTab, setActiveTab] = useState('hostels');
@@ -56,6 +56,9 @@ function OwnerDashboard() {
   // 5. Expense Form State
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseDesc, setExpenseDesc] = useState('');
+
+  // 6. Invoices Filter State
+  const [selectedHostelFilter, setSelectedHostelFilter] = useState('ALL');
 
   const calculateTotalVacancies = (hostel) => {
     if (!hostel.rooms) return 0;
@@ -326,25 +329,37 @@ function OwnerDashboard() {
           className={`sidebar-link ${activeTab === 'hostels' ? 'active' : ''}`}
           onClick={() => setActiveTab('hostels')}
         >
-          <Home size={18} /> My Hostels
+          <Building2 size={18} /> My Properties
+        </div>
+        <div 
+          className={`sidebar-link ${activeTab === 'add-property' ? 'active' : ''}`}
+          onClick={() => setActiveTab('add-property')}
+        >
+          <PlusCircle size={18} /> Add Property / Room
+        </div>
+        <div 
+          className={`sidebar-link ${activeTab === 'finances' ? 'active' : ''}`}
+          onClick={() => setActiveTab('finances')}
+        >
+          <DollarSign size={18} /> Expenses & Profits
         </div>
         <div 
           className={`sidebar-link ${activeTab === 'bookings' ? 'active' : ''}`}
           onClick={() => setActiveTab('bookings')}
         >
-          <ClipboardList size={18} /> Room Bookings
+          <ClipboardList size={18} /> Booking Requests
         </div>
         <div 
           className={`sidebar-link ${activeTab === 'invoices' ? 'active' : ''}`}
           onClick={() => setActiveTab('invoices')}
         >
-          <CreditCard size={18} /> Invoices & Payouts
+          <CreditCard size={18} /> Bills & Payments
         </div>
         <div 
           className={`sidebar-link ${activeTab === 'complaints' ? 'active' : ''}`}
           onClick={() => setActiveTab('complaints')}
         >
-          <MessageSquare size={18} /> Complaints
+          <MessageSquare size={18} /> Help & Support
         </div>
       </aside>
 
@@ -352,12 +367,12 @@ function OwnerDashboard() {
       <main className="dashboard-content">
         {error && <div className="alert-box alert-danger">⚠️ {error}</div>}
 
-        {/* 1. My Hostels Tab */}
+        {/* 1. My Properties Tab */}
         {activeTab === 'hostels' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '30px' }}>
+          <div>
             {/* List Listings */}
             <div>
-              <h2 style={{ marginBottom: '20px' }}>Listed Properties</h2>
+              <h2 style={{ marginBottom: '20px' }}>My Listed Properties</h2>
               {hostels.length === 0 ? (
                 <p style={{ color: 'var(--text-muted)' }}>You have no hostels listed yet.</p>
               ) : (
@@ -553,10 +568,13 @@ function OwnerDashboard() {
                 </div>
               )}
             </div>
+          </div>
+        )}
 
-            {/* Add Hostel Form */}
-            <div>
-              <div className="booking-card">
+        {/* Add Property Tab */}
+        {activeTab === 'add-property' && (
+          <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+            <div className="booking-card">
                 <h3 style={{ marginBottom: '20px' }}><PlusCircle size={16} /> List a New Property</h3>
                 {hostelSuccess && <div className="alert-box alert-success">{hostelSuccess}</div>}
                 
@@ -590,7 +608,7 @@ function OwnerDashboard() {
                       </select>
                     </div>
                     <div>
-                      <label htmlFor="hOccupants">Allowed Occupants</label>
+                      <label htmlFor="hOccupants">Who can stay</label>
                       <select 
                         id="hOccupants"
                         className="form-control"
@@ -754,8 +772,71 @@ function OwnerDashboard() {
                 </form>
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Expenses & Profits Tab */}
+          {activeTab === 'finances' && (
+            <div>
+              <h2 style={{ marginBottom: '20px' }}>Expenses & Profits Summary</h2>
+
+              {/* Overview Stats Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '30px' }}>
+                <div className="room-item-card" style={{ padding: '20px', flexDirection: 'column', background: 'rgba(34, 197, 94, 0.05)', border: '1px solid rgba(34, 197, 94, 0.1)' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Total Amount Collected</span>
+                  <h3 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--success)', marginTop: '8px' }}>
+                    ₹{hostels.reduce((acc, h) => acc + calculateTotalCollected(h), 0)}
+                  </h3>
+                </div>
+                <div className="room-item-card" style={{ padding: '20px', flexDirection: 'column', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Total Expenses Logged</span>
+                  <h3 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--danger)', marginTop: '8px' }}>
+                    ₹{hostels.reduce((acc, h) => acc + calculateTotalExpenses(h), 0)}
+                  </h3>
+                </div>
+                <div className="room-item-card" style={{ padding: '20px', flexDirection: 'column', background: 'rgba(124, 58, 237, 0.05)', border: '1px solid rgba(124, 58, 237, 0.1)' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Overall Net Profit</span>
+                  <h3 style={{ fontSize: '28px', fontWeight: 700, color: '#a78bfa', marginTop: '8px' }}>
+                    ₹{hostels.reduce((acc, h) => acc + calculateTotalCollected(h), 0) - hostels.reduce((acc, h) => acc + calculateTotalExpenses(h), 0)}
+                  </h3>
+                </div>
+              </div>
+
+              {/* Properties Summary List */}
+              <div className="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Property Name</th>
+                      <th>Property Type</th>
+                      <th>Total Collected</th>
+                      <th>Total Expenses</th>
+                      <th>Net Profit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hostels.map(h => {
+                      const collected = calculateTotalCollected(h);
+                      const expenses = calculateTotalExpenses(h);
+                      const profit = collected - expenses;
+                      return (
+                        <tr key={h.id}>
+                          <td><strong>{h.name}</strong></td>
+                          <td>
+                            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', color: '#e2e8f0' }}>
+                              {h.type === 'HOSTEL' ? '🏨 Hostel' : h.type === 'ROOM' ? '🚪 Room (PG)' : h.type === 'FLAT' ? '🏢 Flat' : '🍽️ Mess Only'}
+                            </span>
+                          </td>
+                          <td style={{ color: 'var(--success)', fontWeight: 600 }}>₹{collected}</td>
+                          <td style={{ color: 'var(--danger)', fontWeight: 600 }}>₹{expenses}</td>
+                          <td style={{ color: profit >= 0 ? '#a78bfa' : 'var(--danger)', fontWeight: 700 }}>₹{profit}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
         {/* 2. Room Bookings Tab */}
         {activeTab === 'bookings' && (
@@ -837,9 +918,27 @@ function OwnerDashboard() {
         {/* 3. Invoices Tab */}
         {activeTab === 'invoices' && (
           <div>
-            <h2 style={{ marginBottom: '20px' }}>Invoices Ledger</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+              <h2 style={{ marginBottom: 0 }}>Bills & Payments</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label htmlFor="hostelSelectFilter" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Filter by Property:</label>
+                <select
+                  id="hostelSelectFilter"
+                  className="form-control form-select"
+                  style={{ width: '220px', height: '36px', padding: '0 10px', fontSize: '13px', margin: 0, background: '#181524' }}
+                  value={selectedHostelFilter}
+                  onChange={e => setSelectedHostelFilter(e.target.value)}
+                >
+                  <option value="ALL">All Properties</option>
+                  {hostels.map(h => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
             {invoices.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)' }}>No invoices generated yet.</p>
+              <p style={{ color: 'var(--text-muted)' }}>No bills generated yet.</p>
             ) : (
               <div className="table-container">
                 <table>
@@ -854,8 +953,23 @@ function OwnerDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {invoices.map((inv) => (
-                      <tr key={inv.id}>
+                    {(() => {
+                      const filteredInvoices = selectedHostelFilter === 'ALL' 
+                        ? invoices 
+                        : invoices.filter(inv => inv.booking.room.hostelId === parseInt(selectedHostelFilter));
+                      
+                      if (filteredInvoices.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>
+                              No bills found for this property.
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return filteredInvoices.map((inv) => (
+                        <tr key={inv.id}>
                         <td>
                           <strong>{inv.booking.student.name}</strong>
                           <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{inv.booking.room.hostel.name} | Room {inv.booking.room.roomNumber}</div>
@@ -896,7 +1010,8 @@ function OwnerDashboard() {
                           )}
                         </td>
                       </tr>
-                    ))}
+                    ));
+                  })()}
                   </tbody>
                 </table>
               </div>

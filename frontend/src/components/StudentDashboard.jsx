@@ -153,19 +153,19 @@ function StudentDashboard() {
           className={`sidebar-link ${activeTab === 'bookings' ? 'active' : ''}`}
           onClick={() => setActiveTab('bookings')}
         >
-          <Calendar size={18} /> Bookings
+          <Calendar size={18} /> My Stays
         </div>
         <div 
           className={`sidebar-link ${activeTab === 'invoices' ? 'active' : ''}`}
           onClick={() => setActiveTab('invoices')}
         >
-          <CreditCard size={18} /> Invoices
+          <CreditCard size={18} /> My Bills
         </div>
         <div 
           className={`sidebar-link ${activeTab === 'complaints' ? 'active' : ''}`}
           onClick={() => setActiveTab('complaints')}
         >
-          <AlertCircle size={18} /> Complaints
+          <AlertCircle size={18} /> Help & Support
         </div>
       </aside>
 
@@ -176,7 +176,7 @@ function StudentDashboard() {
         {/* 1. Bookings Tab */}
         {activeTab === 'bookings' && (
           <div>
-            <h2 style={{ marginBottom: '20px' }}>Your Booking History</h2>
+            <h2 style={{ marginBottom: '20px' }}>My Stays & Subscriptions</h2>
             {bookings.length === 0 ? (
               <p style={{ color: 'var(--text-muted)' }}>You have no room bookings yet.</p>
             ) : (
@@ -195,7 +195,16 @@ function StudentDashboard() {
                   <tbody>
                     {bookings.map((booking) => (
                       <tr key={booking.id}>
-                        <td>{booking.room.hostel.name}</td>
+                        <td>
+                          <strong>{booking.room.hostel.name}</strong>
+                          {booking.room.hostel.owner && (
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                              Owner: {booking.room.hostel.owner.name} <br />
+                              📞 {booking.room.hostel.owner.phone || 'N/A'} <br />
+                              ✉️ {booking.room.hostel.owner.email}
+                            </div>
+                          )}
+                        </td>
                         <td>Room {booking.room.roomNumber} ({booking.room.roomType})</td>
                         <td>{new Date(booking.startDate).toLocaleDateString()}</td>
                         <td>{new Date(booking.endDate).toLocaleDateString()}</td>
@@ -231,7 +240,7 @@ function StudentDashboard() {
         {/* 2. Invoices Tab */}
         {activeTab === 'invoices' && (
           <div>
-            <h2 style={{ marginBottom: '20px' }}>Your Rental Invoices</h2>
+            <h2 style={{ marginBottom: '20px' }}>My Bills</h2>
             {invoices.length === 0 ? (
               <p style={{ color: 'var(--text-muted)' }}>No invoices have been generated.</p>
             ) : (

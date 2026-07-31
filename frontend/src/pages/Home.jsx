@@ -121,7 +121,7 @@ function Home() {
             </select>
           </div>
           <div className="search-field" style={{ paddingRight: '15px' }}>
-            <label htmlFor="searchOccupants">Allowed Occupants</label>
+            <label htmlFor="searchOccupants">Who can stay</label>
             <select
               id="searchOccupants"
               value={filterOccupants}
