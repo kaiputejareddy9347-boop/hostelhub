@@ -49,7 +49,22 @@ export const getHostelById = async (req, res) => {
     }
 
     const rooms = await prisma.room.findMany({
-      where: { hostelId: id }
+      where: { hostelId: id },
+      include: {
+        bookings: {
+          where: { status: 'ACCEPTED' },
+          include: {
+            student: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true
+              }
+            }
+          }
+        }
+      }
     });
 
     return res.status(200).json({

@@ -72,6 +72,38 @@ function OwnerDashboard() {
     }
   };
 
+  const [expandedHostelId, setExpandedHostelId] = useState(null);
+
+  const toggleExpandHostel = async (hostelId) => {
+    if (expandedHostelId === hostelId) {
+      setExpandedHostelId(null);
+    } else {
+      setExpandedHostelId(hostelId);
+      // Fetch detailed hostel information including rooms and occupied bookings
+      try {
+        const detailedData = await Api.hostels.getById(hostelId);
+        // Update our hostels list with this detailed one so the rooms list is available
+        setHostels(hostels.map(h => h.id === hostelId ? { ...h, rooms: detailedData.rooms } : h));
+      } catch (err) {
+        setError('Failed to load hostel details.');
+      }
+    }
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setHostelForm({
+          ...hostelForm,
+          imageUrls: [reader.result]
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -245,21 +277,80 @@ function OwnerDashboard() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {hostels.map(h => (
-                    <div key={h.id} className="room-item-card" style={{ alignItems: 'flex-start' }}>
-                      <div>
-                        <h3 style={{ fontSize: '18px', fontWeight: 700 }}>{h.name}</h3>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>📍 {h.address}, {h.city}</p>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '10px' }}>UPI: {h.upiId || 'N/A'}</p>
+                    <div key={h.id} className="room-item-card" style={{ alignItems: 'stretch', flexDirection: 'column' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                        <div style={{ cursor: 'pointer', flex: 1 }} onClick={() => toggleExpandHostel(h.id)}>
+                          <h3 style={{ fontSize: '18px', fontWeight: 700 }}>
+                            {h.name} {expandedHostelId === h.id ? '▼' : '▶'}
+                          </h3>
+                          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>📍 {h.address}, {h.city}</p>
+                          <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '10px' }}>UPI: {h.upiId || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <button 
+                            onClick={() => setSelectedHostelForRoom(h)}
+                            className="btn btn-secondary"
+                            style={{ padding: '8px 14px', fontSize: '12px' }}
+                          >
+                            🚪 Add Room
+                          </button>
+                        </div>
                       </div>
-                      <div>
-                        <button 
-                          onClick={() => setSelectedHostelForRoom(h)}
-                          className="btn btn-secondary"
-                          style={{ padding: '8px 14px', fontSize: '12px' }}
-                        >
-                          🚪 Add Room
-                        </button>
-                      </div>
+
+                      {/* Expanded Rooms and Occupants Details */}
+                      {expandedHostelId === h.id && (
+                        <div style={{ width: '100%', marginTop: '15px', paddingTop: '15px', borderTop: '1px solid var(--border-color)' }}>
+                          <h4 style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 600, color: 'var(--primary-color)' }}>
+                            Rooms & Occupant Details
+                          </h4>
+                          {!h.rooms || h.rooms.length === 0 ? (
+                            <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No rooms added yet. Click "Add Room" to create one.</p>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                              {h.rooms.map(room => {
+                                const activeBooking = room.bookings && room.bookings[0];
+                                return (
+                                  <div 
+                                    key={room.id} 
+                                    style={{ 
+                                      display: 'flex', 
+                                      justifyContent: 'space-between', 
+                                      alignItems: 'center', 
+                                      background: 'rgba(255,255,255,0.02)', 
+                                      padding: '12px 16px', 
+                                      borderRadius: '8px', 
+                                      border: '1px solid rgba(255,255,255,0.05)' 
+                                    }}
+                                  >
+                                    <div>
+                                      <span style={{ fontWeight: 600, fontSize: '14px' }}>Room {room.roomNumber}</span>
+                                      <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '10px' }}>({room.roomType})</span>
+                                      
+                                      {room.status === 'OCCUPIED' && activeBooking ? (
+                                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '6px' }}>
+                                          👤 Tenant: <strong style={{ color: 'white' }}>{activeBooking.student.name}</strong>
+                                          <span style={{ marginLeft: '12px' }}>📅 Check-in: <strong style={{ color: 'white' }}>{new Date(activeBooking.startDate).toLocaleDateString()}</strong></span>
+                                          {activeBooking.student.phone && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>📞 Phone: {activeBooking.student.phone}</div>}
+                                        </div>
+                                      ) : (
+                                        <div style={{ fontSize: '12px', color: 'var(--success)', marginTop: '6px', fontWeight: 600 }}>
+                                          🟢 Available for Booking
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--primary-color)' }}>
+                                        ₹{room.pricePerMonth}
+                                      </div>
+                                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>/ month</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -349,7 +440,7 @@ function OwnerDashboard() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="hBank">Bank Details</label>
+                    <label htmlFor="hBank">Bank Details (Optional)</label>
                     <input 
                       type="text" 
                       id="hBank"
@@ -384,15 +475,20 @@ function OwnerDashboard() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="hImg">Image URL</label>
+                    <label htmlFor="hImgFile">Hostel Image (Upload from Camera or Gallery)</label>
                     <input 
-                      type="text" 
-                      id="hImg"
+                      type="file" 
+                      id="hImgFile"
+                      accept="image/*"
                       className="form-control"
-                      placeholder="https://images.unsplash.com/photo-..."
-                      value={hostelForm.imageUrls[0]}
-                      onChange={e => setHostelForm({...hostelForm, imageUrls: [e.target.value]})}
+                      style={{ padding: '8px' }}
+                      onChange={handleImageUpload}
                     />
+                    {hostelForm.imageUrls[0] && (
+                      <div style={{ marginTop: '10px', width: '100%', height: '150px', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                        <img src={hostelForm.imageUrls[0]} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    )}
                   </div>
 
                   <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
