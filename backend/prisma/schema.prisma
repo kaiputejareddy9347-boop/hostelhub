@@ -43,6 +43,19 @@ enum ComplaintStatus {
   RESOLVED
 }
 
+enum PropertyType {
+  HOSTEL
+  ROOM
+  FLAT
+}
+
+enum OccupantType {
+  STUDENTS
+  BACHELORS
+  FAMILY
+  ANY
+}
+
 model User {
   id         Int         @id @default(autoincrement())
   username   String      @unique
@@ -61,20 +74,22 @@ model User {
 }
 
 model Hostel {
-  id            Int         @id @default(autoincrement())
-  ownerId       Int         @map("owner_id")
-  owner         User        @relation("OwnerHostels", fields: [ownerId], references: [id], onDelete: Cascade)
+  id            Int          @id @default(autoincrement())
+  ownerId       Int          @map("owner_id")
+  owner         User         @relation("OwnerHostels", fields: [ownerId], references: [id], onDelete: Cascade)
   name          String
   description   String?
   address       String
   city          String
-  contactNumber String?     @map("contact_number")
-  isVerified    Boolean     @default(false) @map("is_verified")
-  upiId         String?     @map("upi_id")
-  bankAccount   String?     @map("bank_account")
-  createdAt     DateTime    @default(now()) @map("created_at")
+  contactNumber String?      @map("contact_number")
+  isVerified    Boolean      @default(false) @map("is_verified")
+  upiId         String?      @map("upi_id")
+  bankAccount   String?      @map("bank_account")
+  type          PropertyType @default(HOSTEL)
+  allowedOccupants OccupantType @default(ANY) @map("allowed_occupants")
+  createdAt     DateTime     @default(now()) @map("created_at")
   rooms         Room[]
-  facilities    Facility[]  @relation("HostelFacilities")
+  facilities    Facility[]   @relation("HostelFacilities")
   images        Image[]
   complaints    Complaint[]
   reviews       Review[]

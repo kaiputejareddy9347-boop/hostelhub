@@ -23,6 +23,8 @@ function OwnerDashboard() {
     contactNumber: '',
     upiId: '',
     bankAccount: '',
+    type: 'HOSTEL',
+    allowedOccupants: 'ANY',
     facilityIds: [],
     imageUrls: ['']
   });
@@ -119,7 +121,7 @@ function OwnerDashboard() {
         ...hostelForm,
         facilityIds: hostelForm.facilityIds.map(id => parseInt(id))
       });
-      setHostelSuccess('Hostel listed successfully!');
+      setHostelSuccess('Listing published successfully!');
       setHostelForm({
         name: '',
         description: '',
@@ -128,6 +130,8 @@ function OwnerDashboard() {
         contactNumber: '',
         upiId: '',
         bankAccount: '',
+        type: 'HOSTEL',
+        allowedOccupants: 'ANY',
         facilityIds: [],
         imageUrls: ['']
       });
@@ -284,6 +288,14 @@ function OwnerDashboard() {
                             {h.name} {expandedHostelId === h.id ? '▼' : '▶'}
                           </h3>
                           <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>📍 {h.address}, {h.city}</p>
+                          <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(124, 58, 237, 0.2)', color: '#a78bfa', fontWeight: 600 }}>
+                              {h.type === 'HOSTEL' ? '🏨 Hostel' : h.type === 'ROOM' ? '🚪 Room (PG)' : '🏢 Flat / Apartment'}
+                            </span>
+                            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.08)', color: '#e2e8f0' }}>
+                              {h.allowedOccupants === 'ANY' ? '👥 Any Occupants' : h.allowedOccupants === 'STUDENTS' ? '🎓 Students Only' : h.allowedOccupants === 'BACHELORS' ? '💼 Bachelors Only' : '👨‍👩‍👧 Families Only'}
+                            </span>
+                          </div>
                           <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '10px' }}>UPI: {h.upiId || 'N/A'}</p>
                         </div>
                         <div>
@@ -360,21 +372,51 @@ function OwnerDashboard() {
             {/* Add Hostel Form */}
             <div>
               <div className="booking-card">
-                <h3 style={{ marginBottom: '20px' }}><PlusCircle size={16} /> List a New Hostel</h3>
+                <h3 style={{ marginBottom: '20px' }}><PlusCircle size={16} /> List a New Property</h3>
                 {hostelSuccess && <div className="alert-box alert-success">{hostelSuccess}</div>}
                 
                 <form onSubmit={handleHostelSubmit}>
                   <div className="form-group">
-                    <label htmlFor="hName">Hostel Name</label>
+                    <label htmlFor="hName">Property Name</label>
                     <input 
                       type="text" 
                       id="hName"
                       className="form-control"
-                      placeholder="Grand Residency"
+                      placeholder="Grand Residency / 2BHK Flat"
                       required
                       value={hostelForm.name}
                       onChange={e => setHostelForm({...hostelForm, name: e.target.value})}
                     />
+                  </div>
+
+                  <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div>
+                      <label htmlFor="hType">Property Type</label>
+                      <select 
+                        id="hType"
+                        className="form-control"
+                        value={hostelForm.type}
+                        onChange={e => setHostelForm({...hostelForm, type: e.target.value})}
+                      >
+                        <option value="HOSTEL">Hostel</option>
+                        <option value="ROOM">Room (PG)</option>
+                        <option value="FLAT">Flat / Apartment</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="hOccupants">Allowed Occupants</label>
+                      <select 
+                        id="hOccupants"
+                        className="form-control"
+                        value={hostelForm.allowedOccupants}
+                        onChange={e => setHostelForm({...hostelForm, allowedOccupants: e.target.value})}
+                      >
+                        <option value="ANY">Any / All</option>
+                        <option value="STUDENTS">Students Only</option>
+                        <option value="BACHELORS">Bachelors (Working)</option>
+                        <option value="FAMILY">Families Only</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div className="form-group">
@@ -505,14 +547,14 @@ function OwnerDashboard() {
           <div>
             <h2 style={{ marginBottom: '20px' }}>Active Tenant Bookings & Requests</h2>
             {bookings.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)' }}>No student bookings found for your listings.</p>
+              <p style={{ color: 'var(--text-muted)' }}>No tenant bookings found for your listings.</p>
             ) : (
               <div className="table-container">
                 <table>
                   <thead>
                     <tr>
-                      <th>Student</th>
-                      <th>Hostel / Room</th>
+                      <th>Tenant</th>
+                      <th>Property / Room</th>
                       <th>Stay Period</th>
                       <th>Status</th>
                       <th>Actions</th>
@@ -563,7 +605,7 @@ function OwnerDashboard() {
                                 className="btn btn-outline" 
                                 style={{ padding: '6px 12px', fontSize: '11px', borderColor: 'var(--danger)', color: 'var(--danger)' }}
                               >
-                                Evict Student
+                                Terminate Tenancy
                               </button>
                             )}
                           </div>
@@ -588,7 +630,7 @@ function OwnerDashboard() {
                 <table>
                   <thead>
                     <tr>
-                      <th>Student</th>
+                      <th>Tenant</th>
                       <th>Billing Month</th>
                       <th>Amount</th>
                       <th>Due Date</th>
@@ -804,7 +846,7 @@ function OwnerDashboard() {
               <span className="modal-close" onClick={() => setActiveInvoiceForPayment(null)}>×</span>
               <h3 style={{ marginBottom: '20px' }}>Record Cash Payment</h3>
               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Log payment for student <strong>{activeInvoiceForPayment.booking.student.name}</strong></p>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Log payment for tenant <strong>{activeInvoiceForPayment.booking.student.name}</strong></p>
                 <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Month: {activeInvoiceForPayment.billingMonth}</p>
                 <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--primary-color)', marginTop: '8px' }}>Received Amount: ₹{activeInvoiceForPayment.amount}</p>
               </div>

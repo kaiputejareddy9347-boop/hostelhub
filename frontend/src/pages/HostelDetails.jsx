@@ -184,7 +184,7 @@ function HostelDetails() {
                 <div key={room.id} className="room-item-card">
                   <div>
                     <h4 style={{ fontSize: '16px', fontWeight: 600 }}>Room {room.roomNumber} ({room.roomType})</h4>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Capacity: {room.capacity} Student(s)</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Capacity: {room.capacity} Person(s)</p>
                     <div style={{ marginTop: '8px' }}>
                       <span className={`status-pill ${room.status === 'AVAILABLE' ? 'status-available' : 'status-occupied'}`}>
                         {room.status}

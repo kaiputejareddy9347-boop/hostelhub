@@ -78,7 +78,7 @@ export const getHostelById = async (req, res) => {
 };
 
 export const createHostel = async (req, res) => {
-  const { name, description, address, city, contactNumber, upiId, bankAccount, facilityIds, imageUrls } = req.body;
+  const { name, description, address, city, contactNumber, upiId, bankAccount, type, allowedOccupants, facilityIds, imageUrls } = req.body;
   const ownerId = req.userId;
 
   try {
@@ -107,6 +107,8 @@ export const createHostel = async (req, res) => {
         contactNumber,
         upiId,
         bankAccount,
+        type: type || 'HOSTEL',
+        allowedOccupants: allowedOccupants || 'ANY',
         ownerId,
         facilities: {
           connect: connectFacilities

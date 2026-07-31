@@ -65,7 +65,7 @@ function Register() {
         <div className="auth-card" style={{ maxWidth: '520px' }}>
           <div className="auth-header">
             <h2>Create an Account</h2>
-            <p>Join HostelHub as a student or property owner</p>
+            <p>Join HostelHub as a tenant or property owner</p>
           </div>
 
           {error && (
@@ -159,8 +159,8 @@ function Register() {
                 value={formData.role}
                 onChange={handleChange}
               >
-                <option value="STUDENT">Student (looking for hostels)</option>
-                <option value="OWNER">Hostel Owner (listing properties)</option>
+                <option value="STUDENT">Tenant (looking for rooms/flats)</option>
+                <option value="OWNER">Property Owner (listing properties)</option>
               </select>
             </div>
 
