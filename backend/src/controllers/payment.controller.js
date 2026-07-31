@@ -1,7 +1,7 @@
 import prisma from '../db.js';
 
 export const processPayment = async (req, res) => {
-  const { invoiceId, amount, paymentMethod, transactionId } = req.body;
+  const { invoiceId, amount, paymentMethod, transactionId, screenshot } = req.body;
   const userId = req.userId;
 
   try {
@@ -37,6 +37,11 @@ export const processPayment = async (req, res) => {
       return res.status(400).json({ message: "Invoice is already paid" });
     }
 
+    // Validation: for online payments (non-CASH), either transaction ID or screenshot is required
+    if (paymentMethod !== 'CASH' && (!transactionId || transactionId.trim() === '') && (!screenshot || screenshot.trim() === '')) {
+      return res.status(400).json({ message: "Either Transaction ID or payment screenshot is required." });
+    }
+
     // Mark invoice paid
     await prisma.invoice.update({
       where: { id: invoice.id },
@@ -51,7 +56,8 @@ export const processPayment = async (req, res) => {
         amount: parseFloat(amount),
         paymentMethod,
         status: 'SUCCESS',
-        transactionId: transactionId || `TXN-OFFLINE-${Date.now()}`
+        transactionId: transactionId && transactionId.trim() !== '' ? transactionId.trim() : (paymentMethod === 'CASH' ? `TXN-CASH-${Date.now()}` : `TXN-PENDING-${Date.now()}`),
+        screenshot: screenshot || null
       }
     });
 

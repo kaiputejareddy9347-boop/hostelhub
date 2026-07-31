@@ -11,6 +11,7 @@ export const getStudentInvoices = async (req, res) => {
         }
       },
       include: {
+        payments: true,
         booking: {
           include: {
             room: {
@@ -45,6 +46,7 @@ export const getOwnerInvoices = async (req, res) => {
         }
       },
       include: {
+        payments: true,
         booking: {
           include: {
             student: {

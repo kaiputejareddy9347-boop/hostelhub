@@ -22,6 +22,7 @@ function StudentDashboard() {
   const [payingInvoice, setPayingInvoice] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('UPI');
   const [transactionId, setTransactionId] = useState('');
+  const [screenshot, setScreenshot] = useState('');
 
   // Checkout Date State
   const [modifyingBooking, setModifyingBooking] = useState(null);
@@ -86,22 +87,41 @@ function StudentDashboard() {
     e.preventDefault();
     setError('');
 
+    // Validation: Online payments require either a transaction ID or a screenshot
+    if (paymentMethod !== 'CASH' && (!transactionId || transactionId.trim() === '') && (!screenshot || screenshot.trim() === '')) {
+      setError('Either a Transaction ID or a Payment Screenshot is compulsory.');
+      return;
+    }
+
     try {
       await Api.payments.create({
         invoiceId: payingInvoice.id,
         amount: parseFloat(payingInvoice.amount),
         paymentMethod,
-        transactionId: transactionId || `TXN-${Date.now()}`
+        transactionId: transactionId.trim() !== '' ? transactionId.trim() : undefined,
+        screenshot: screenshot || undefined
       });
 
       setPayingInvoice(null);
       setTransactionId('');
+      setScreenshot('');
       
       // Refresh Invoices & bookings
       const invoicesData = await Api.invoices.getStudentInvoices();
       setInvoices(invoicesData);
     } catch (err) {
       setError(err.message || 'Payment processing failed.');
+    }
+  };
+
+  const handleScreenshotUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setScreenshot(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -379,7 +399,7 @@ function StudentDashboard() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="txId">Transaction ID (Optional)</label>
+                  <label htmlFor="txId">Transaction ID (Required if no screenshot)</label>
                   <input 
                     type="text"
                     id="txId"
@@ -388,6 +408,23 @@ function StudentDashboard() {
                     value={transactionId}
                     onChange={(e) => setTransactionId(e.target.value)}
                   />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="scrFile">Payment Screenshot (Required if no Transaction ID)</label>
+                  <input 
+                    type="file" 
+                    id="scrFile"
+                    accept="image/*"
+                    className="form-control"
+                    style={{ padding: '8px' }}
+                    onChange={handleScreenshotUpload}
+                  />
+                  {screenshot && (
+                    <div style={{ marginTop: '10px', width: '100%', height: '120px', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                      <img src={screenshot} alt="Screenshot Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  )}
                 </div>
 
                 <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>

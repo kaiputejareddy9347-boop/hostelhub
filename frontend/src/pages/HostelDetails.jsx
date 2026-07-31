@@ -142,8 +142,30 @@ function HostelDetails() {
           <div className="details-title-row">
             <div>
               <h1>{hostel.name}</h1>
-              <div className="hostel-location" style={{ fontSize: '15px' }}>
-                <MapPin size={16} /> {hostel.address}, {hostel.city}
+              <div className="hostel-location" style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <MapPin size={16} style={{ flexShrink: 0 }} /> {hostel.address}, {hostel.city}
+                {hostel.googleMapsUrl && (
+                  <a 
+                    href={hostel.googleMapsUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    style={{ 
+                      color: '#a78bfa', 
+                      fontWeight: 600, 
+                      marginLeft: '10px', 
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '12px',
+                      background: 'rgba(124, 58, 237, 0.15)',
+                      padding: '4px 10px',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    🗺️ View on Google Maps
+                  </a>
+                )}
               </div>
             </div>
             {hostel.isVerified && (
@@ -174,6 +196,16 @@ function HostelDetails() {
             </div>
           </div>
 
+          {/* Mess Timetable */}
+          {hostel.messTimetable && (
+            <div style={{ marginTop: '25px' }}>
+              <h3 style={{ marginBottom: '15px', fontSize: '20px' }}>🍽️ Mess Timetable</h3>
+              <div style={{ maxWidth: '100%', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                <img src={hostel.messTimetable} alt="Mess Timetable" style={{ width: '100%', height: 'auto', display: 'block' }} />
+              </div>
+            </div>
+          )}
+
           {/* Rooms List */}
           <div>
             <h3 style={{ marginBottom: '15px', fontSize: '20px' }}>Room Listings</h3>
@@ -181,8 +213,13 @@ function HostelDetails() {
               <p style={{ color: 'var(--text-muted)' }}>No rooms configured for this hostel yet.</p>
             ) : (
               rooms.map((room) => (
-                <div key={room.id} className="room-item-card">
-                  <div>
+                <div key={room.id} className="room-item-card" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                  {room.imageUrl && (
+                    <div style={{ width: '100px', height: '80px', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden', flexShrink: 0 }}>
+                      <img src={room.imageUrl} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  )}
+                  <div style={{ flex: 1 }}>
                     <h4 style={{ fontSize: '16px', fontWeight: 600 }}>Room {room.roomNumber} ({room.roomType})</h4>
                     <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Capacity: {room.capacity} Person(s)</p>
                     <div style={{ marginTop: '8px' }}>
@@ -191,7 +228,7 @@ function HostelDetails() {
                       </span>
                     </div>
                   </div>
-                  <div className="room-price-info">
+                  <div className="room-price-info" style={{ textAlign: 'right' }}>
                     <div className="room-price">₹{room.pricePerMonth}</div>
                     <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>per month</span>
                   </div>

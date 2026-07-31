@@ -25,6 +25,8 @@ function OwnerDashboard() {
     bankAccount: '',
     type: 'HOSTEL',
     allowedOccupants: 'ANY',
+    messTimetable: '',
+    googleMapsUrl: '',
     facilityIds: [],
     imageUrls: ['']
   });
@@ -36,7 +38,8 @@ function OwnerDashboard() {
     roomNumber: '',
     roomType: 'Single',
     capacity: 1,
-    pricePerMonth: ''
+    pricePerMonth: '',
+    imageUrl: ''
   });
   const [roomSuccess, setRoomSuccess] = useState('');
 
@@ -48,6 +51,7 @@ function OwnerDashboard() {
   // 4. Record Payment State
   const [activeInvoiceForPayment, setActiveInvoiceForPayment] = useState(null);
   const [paymentTransactionId, setPaymentTransactionId] = useState('');
+  const [viewScreenshotUrl, setViewScreenshotUrl] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -106,6 +110,34 @@ function OwnerDashboard() {
     }
   };
 
+  const handleMessTimetableUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setHostelForm({
+          ...hostelForm,
+          messTimetable: reader.result
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRoomImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setRoomForm({
+          ...roomForm,
+          imageUrl: reader.result
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -132,6 +164,8 @@ function OwnerDashboard() {
         bankAccount: '',
         type: 'HOSTEL',
         allowedOccupants: 'ANY',
+        messTimetable: '',
+        googleMapsUrl: '',
         facilityIds: [],
         imageUrls: ['']
       });
@@ -159,7 +193,8 @@ function OwnerDashboard() {
         roomNumber: '',
         roomType: 'Single',
         capacity: 1,
-        pricePerMonth: ''
+        pricePerMonth: '',
+        imageUrl: ''
       });
       setTimeout(() => setSelectedHostelForRoom(null), 1500);
       loadData();
@@ -331,12 +366,19 @@ function OwnerDashboard() {
                                       background: 'rgba(255,255,255,0.02)', 
                                       padding: '12px 16px', 
                                       borderRadius: '8px', 
-                                      border: '1px solid rgba(255,255,255,0.05)' 
+                                      border: '1px solid rgba(255,255,255,0.05)',
+                                      gap: '15px'
                                     }}
                                   >
-                                    <div>
-                                      <span style={{ fontWeight: 600, fontSize: '14px' }}>Room {room.roomNumber}</span>
-                                      <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '10px' }}>({room.roomType})</span>
+                                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                      {room.imageUrl && (
+                                        <div style={{ width: '60px', height: '60px', borderRadius: '6px', border: '1px solid var(--border-color)', overflow: 'hidden', flexShrink: 0 }}>
+                                          <img src={room.imageUrl} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </div>
+                                      )}
+                                      <div>
+                                        <span style={{ fontWeight: 600, fontSize: '14px' }}>Room {room.roomNumber}</span>
+                                        <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '10px' }}>({room.roomType})</span>
                                       
                                       {room.status === 'OCCUPIED' && activeBooking ? (
                                         <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '6px' }}>
@@ -349,6 +391,7 @@ function OwnerDashboard() {
                                           🟢 Available for Booking
                                         </div>
                                       )}
+                                    </div>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
                                       <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--primary-color)' }}>
@@ -458,6 +501,18 @@ function OwnerDashboard() {
                   </div>
 
                   <div className="form-group">
+                    <label htmlFor="hMaps">Google Maps Location URL (Optional)</label>
+                    <input 
+                      type="url" 
+                      id="hMaps"
+                      className="form-control"
+                      placeholder="https://maps.app.goo.gl/..."
+                      value={hostelForm.googleMapsUrl}
+                      onChange={e => setHostelForm({...hostelForm, googleMapsUrl: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="form-group">
                     <label htmlFor="hContact">Contact Phone</label>
                     <input 
                       type="text" 
@@ -529,6 +584,23 @@ function OwnerDashboard() {
                     {hostelForm.imageUrls[0] && (
                       <div style={{ marginTop: '10px', width: '100%', height: '150px', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
                         <img src={hostelForm.imageUrls[0]} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="hMessTimetable">Mess Timetable Image (Optional - Camera/Gallery)</label>
+                    <input 
+                      type="file" 
+                      id="hMessTimetable"
+                      accept="image/*"
+                      className="form-control"
+                      style={{ padding: '8px' }}
+                      onChange={handleMessTimetableUpload}
+                    />
+                    {hostelForm.messTimetable && (
+                      <div style={{ marginTop: '10px', width: '100%', height: '150px', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                        <img src={hostelForm.messTimetable} alt="Timetable Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                     )}
                   </div>
@@ -652,6 +724,22 @@ function OwnerDashboard() {
                           <span className={`status-pill ${inv.status === 'PAID' ? 'status-available' : 'status-pending'}`}>
                             {inv.status}
                           </span>
+                          {inv.status === 'PAID' && inv.payments && inv.payments[0] && (
+                            <div style={{ fontSize: '11px', marginTop: '6px', color: 'var(--text-secondary)', textAlign: 'left' }}>
+                              {inv.payments[0].transactionId && !inv.payments[0].transactionId.startsWith('TXN-PENDING-') && !inv.payments[0].transactionId.startsWith('TXN-CASH-') && (
+                                <div style={{ wordBreak: 'break-all' }}>Ref: <strong style={{ color: 'white' }}>{inv.payments[0].transactionId}</strong></div>
+                              )}
+                              {inv.payments[0].screenshot && (
+                                <button
+                                  onClick={() => setViewScreenshotUrl(inv.payments[0].screenshot)}
+                                  className="btn btn-outline"
+                                  style={{ padding: '2px 6px', fontSize: '10px', marginTop: '4px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                                >
+                                  🖼️ View Screenshot
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td>
                           {inv.status === 'PENDING' && (
@@ -785,6 +873,23 @@ function OwnerDashboard() {
                   />
                 </div>
 
+                <div className="form-group">
+                  <label htmlFor="rImgFile">Room Photo (Optional - Camera/Gallery)</label>
+                  <input 
+                    type="file" 
+                    id="rImgFile"
+                    accept="image/*"
+                    className="form-control"
+                    style={{ padding: '8px' }}
+                    onChange={handleRoomImageUpload}
+                  />
+                  {roomForm.imageUrl && (
+                    <div style={{ marginTop: '10px', width: '100%', height: '120px', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                      <img src={roomForm.imageUrl} alt="Room Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  )}
+                </div>
+
                 <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
                   Register Room
                 </button>
@@ -868,6 +973,16 @@ function OwnerDashboard() {
                   Record Offline Cash Payment
                 </button>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Screenshot View Modal */}
+        {viewScreenshotUrl && (
+          <div className="modal-overlay active" onClick={() => setViewScreenshotUrl(null)}>
+            <div className="modal-content" style={{ maxWidth: '600px', background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 }} onClick={e => e.stopPropagation()}>
+              <span className="modal-close" style={{ top: '-15px', right: '-15px', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => setViewScreenshotUrl(null)}>×</span>
+              <img src={viewScreenshotUrl} alt="Payment Screenshot" style={{ width: '100%', height: 'auto', borderRadius: '8px', display: 'block', maxHeight: '80vh', objectFit: 'contain' }} />
             </div>
           </div>
         )}

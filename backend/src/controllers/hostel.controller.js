@@ -78,7 +78,7 @@ export const getHostelById = async (req, res) => {
 };
 
 export const createHostel = async (req, res) => {
-  const { name, description, address, city, contactNumber, upiId, bankAccount, type, allowedOccupants, facilityIds, imageUrls } = req.body;
+  const { name, description, address, city, contactNumber, upiId, bankAccount, type, allowedOccupants, messTimetable, googleMapsUrl, facilityIds, imageUrls } = req.body;
   const ownerId = req.userId;
 
   try {
@@ -109,6 +109,8 @@ export const createHostel = async (req, res) => {
         bankAccount,
         type: type || 'HOSTEL',
         allowedOccupants: allowedOccupants || 'ANY',
+        messTimetable,
+        googleMapsUrl,
         ownerId,
         facilities: {
           connect: connectFacilities
@@ -132,7 +134,7 @@ export const createHostel = async (req, res) => {
 
 export const addRoomToHostel = async (req, res) => {
   const id = parseInt(req.params.id);
-  const { roomNumber, roomType, capacity, pricePerMonth } = req.body;
+  const { roomNumber, roomType, capacity, pricePerMonth, imageUrl } = req.body;
   const ownerId = req.userId;
 
   try {
@@ -155,6 +157,7 @@ export const addRoomToHostel = async (req, res) => {
         roomType,
         capacity: parseInt(capacity),
         pricePerMonth: parseFloat(pricePerMonth),
+        imageUrl,
         status: 'AVAILABLE'
       }
     });
