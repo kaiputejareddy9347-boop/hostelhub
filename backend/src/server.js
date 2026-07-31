@@ -44,6 +44,7 @@ app.get('/api/hostels/owner', verifyToken, isOwner, hostelController.getOwnerHos
 app.get('/api/hostels/:id', hostelController.getHostelById);
 app.post('/api/hostels', verifyToken, isOwnerOrAdmin, hostelController.createHostel);
 app.post('/api/hostels/:id/rooms', verifyToken, isOwner, hostelController.addRoomToHostel);
+app.post('/api/hostels/:id/expenses', verifyToken, isOwner, hostelController.addExpenseToHostel);
 
 // 3. Booking routes
 app.post('/api/bookings', verifyToken, isStudent, bookingController.createBooking);

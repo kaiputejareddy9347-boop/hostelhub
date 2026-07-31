@@ -47,6 +47,7 @@ enum PropertyType {
   HOSTEL
   ROOM
   FLAT
+  MESS
 }
 
 enum OccupantType {
@@ -96,6 +97,7 @@ model Hostel {
   complaints    Complaint[]
   reviews       Review[]
   notices       Notice[]
+  expenses      Expense[]
 
   @@map("hostels")
 }
@@ -161,6 +163,18 @@ model Payment {
   screenshot    String?       @map("screenshot")
 
   @@map("payments")
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  hostelId    Int      @map("hostel_id")
+  hostel      Hostel   @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  amount      Decimal  @db.Decimal(10, 2)
+  description String
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("expenses")
 }
 
 model Review {

@@ -117,6 +117,7 @@ function Home() {
               <option value="HOSTEL" style={{ background: '#13111C' }}>🏨 Hostels</option>
               <option value="ROOM" style={{ background: '#13111C' }}>🚪 Rooms / PGs</option>
               <option value="FLAT" style={{ background: '#13111C' }}>🏢 Flats / Apartments</option>
+              <option value="MESS" style={{ background: '#13111C' }}>🍽️ Mess / Food Services</option>
             </select>
           </div>
           <div className="search-field" style={{ paddingRight: '15px' }}>
@@ -193,7 +194,7 @@ function Home() {
                     </div>
                     <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
                       <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: 'rgba(124, 58, 237, 0.2)', color: '#a78bfa', fontWeight: 600 }}>
-                        {hostel.type === 'HOSTEL' ? '🏨 Hostel' : hostel.type === 'ROOM' ? '🚪 Room (PG)' : '🏢 Flat'}
+                        {hostel.type === 'HOSTEL' ? '🏨 Hostel' : hostel.type === 'ROOM' ? '🚪 Room (PG)' : hostel.type === 'FLAT' ? '🏢 Flat' : '🍽️ Mess Only'}
                       </span>
                       <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.08)', color: '#e2e8f0' }}>
                         {hostel.allowedOccupants === 'ANY' ? '👥 Any' : hostel.allowedOccupants === 'STUDENTS' ? '🎓 Students' : hostel.allowedOccupants === 'BACHELORS' ? '💼 Bachelors' : '👨‍👩‍👧 Families'}

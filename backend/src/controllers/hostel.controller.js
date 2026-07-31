@@ -33,6 +33,7 @@ export const getHostelById = async (req, res) => {
       include: {
         facilities: true,
         images: true,
+        expenses: true,
         owner: {
           select: {
             id: true,
@@ -61,6 +62,9 @@ export const getHostelById = async (req, res) => {
                 email: true,
                 phone: true
               }
+            },
+            payments: {
+              where: { status: 'SUCCESS' }
             }
           }
         }
@@ -177,13 +181,59 @@ export const getOwnerHostels = async (req, res) => {
       where: { ownerId },
       include: {
         facilities: true,
-        images: true
+        images: true,
+        expenses: true,
+        rooms: {
+          include: {
+            bookings: {
+              where: { status: 'ACCEPTED' },
+              include: {
+                payments: {
+                  where: { status: 'SUCCESS' }
+                }
+              }
+            }
+          }
+        }
       }
     });
 
     return res.status(200).json(hostels);
   } catch (error) {
     console.error("Get Owner Hostels Error:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+export const addExpenseToHostel = async (req, res) => {
+  const hostelId = parseInt(req.params.id);
+  const { amount, description } = req.body;
+  const ownerId = req.userId;
+
+  try {
+    const hostel = await prisma.hostel.findUnique({
+      where: { id: hostelId }
+    });
+
+    if (!hostel) {
+      return res.status(404).json({ message: "Property not found" });
+    }
+
+    if (hostel.ownerId !== ownerId) {
+      return res.status(403).json({ message: "You do not own this property" });
+    }
+
+    const expense = await prisma.expense.create({
+      data: {
+        hostelId,
+        amount: parseFloat(amount),
+        description
+      }
+    });
+
+    return res.status(201).json(expense);
+  } catch (error) {
+    console.error("Add Expense Error:", error);
     return res.status(500).json({ message: "Internal server error." });
   }
 };

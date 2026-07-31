@@ -53,6 +53,36 @@ function OwnerDashboard() {
   const [paymentTransactionId, setPaymentTransactionId] = useState('');
   const [viewScreenshotUrl, setViewScreenshotUrl] = useState(null);
 
+  // 5. Expense Form State
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseDesc, setExpenseDesc] = useState('');
+
+  const calculateTotalVacancies = (hostel) => {
+    if (!hostel.rooms) return 0;
+    return hostel.rooms.reduce((acc, room) => {
+      const activeBookingsCount = room.bookings ? room.bookings.length : 0;
+      return acc + Math.max(0, room.capacity - activeBookingsCount);
+    }, 0);
+  };
+
+  const calculateTotalCollected = (hostel) => {
+    if (!hostel.rooms) return 0;
+    return hostel.rooms.reduce((acc, room) => {
+      const roomPaymentsSum = room.bookings ? room.bookings.reduce((pAcc, booking) => {
+        const bookingPaymentsSum = booking.payments ? booking.payments.reduce((payAcc, payment) => {
+          return payAcc + parseFloat(payment.amount);
+        }, 0) : 0;
+        return pAcc + bookingPaymentsSum;
+      }, 0) : 0;
+      return acc + roomPaymentsSum;
+    }, 0);
+  };
+
+  const calculateTotalExpenses = (hostel) => {
+    if (!hostel.expenses) return 0;
+    return hostel.expenses.reduce((acc, exp) => acc + parseFloat(exp.amount), 0);
+  };
+
   const loadData = async () => {
     setLoading(true);
     setError('');
@@ -203,6 +233,23 @@ function OwnerDashboard() {
     }
   };
 
+  const handleExpenseSubmit = async (e, hostelId) => {
+    e.preventDefault();
+    if (!expenseAmount || !expenseDesc) return;
+    setError('');
+    try {
+      await Api.hostels.addExpense(hostelId, {
+        amount: parseFloat(expenseAmount),
+        description: expenseDesc
+      });
+      setExpenseAmount('');
+      setExpenseDesc('');
+      loadData();
+    } catch (err) {
+      setError(err.message || 'Failed to add expense.');
+    }
+  };
+
   const handleBookingAction = async (bookingId, status) => {
     setError('');
     try {
@@ -325,13 +372,32 @@ function OwnerDashboard() {
                           <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>📍 {h.address}, {h.city}</p>
                           <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(124, 58, 237, 0.2)', color: '#a78bfa', fontWeight: 600 }}>
-                              {h.type === 'HOSTEL' ? '🏨 Hostel' : h.type === 'ROOM' ? '🚪 Room (PG)' : '🏢 Flat / Apartment'}
+                              {h.type === 'HOSTEL' ? '🏨 Hostel' : h.type === 'ROOM' ? '🚪 Room (PG)' : h.type === 'FLAT' ? '🏢 Flat / Apartment' : '🍽️ Mess Only'}
                             </span>
                             <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.08)', color: '#e2e8f0' }}>
                               {h.allowedOccupants === 'ANY' ? '👥 Any Occupants' : h.allowedOccupants === 'STUDENTS' ? '🎓 Students Only' : h.allowedOccupants === 'BACHELORS' ? '💼 Bachelors Only' : '👨‍👩‍👧 Families Only'}
                             </span>
+                            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: calculateTotalVacancies(h) > 0 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: calculateTotalVacancies(h) > 0 ? '#4ade80' : '#f87171', fontWeight: 600 }}>
+                              🪹 Vacancies: {calculateTotalVacancies(h)} spots left
+                            </span>
                           </div>
                           <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '10px' }}>UPI: {h.upiId || 'N/A'}</p>
+                          <div style={{ display: 'flex', gap: '15px', marginTop: '12px', background: 'rgba(255,255,255,0.01)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', maxWidth: '450px' }}>
+                            <div style={{ flex: 1, fontSize: '12px' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>Collected:</span>
+                              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--success)' }}>₹{calculateTotalCollected(h)}</div>
+                            </div>
+                            <div style={{ flex: 1, fontSize: '12px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '15px' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>Expenses:</span>
+                              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--danger)' }}>₹{calculateTotalExpenses(h)}</div>
+                            </div>
+                            <div style={{ flex: 1, fontSize: '12px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '15px' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>Net Profit:</span>
+                              <div style={{ fontSize: '14px', fontWeight: 700, color: calculateTotalCollected(h) - calculateTotalExpenses(h) >= 0 ? '#a78bfa' : 'var(--danger)' }}>
+                                ₹{calculateTotalCollected(h) - calculateTotalExpenses(h)}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         <div>
                           <button 
@@ -348,14 +414,18 @@ function OwnerDashboard() {
                       {expandedHostelId === h.id && (
                         <div style={{ width: '100%', marginTop: '15px', paddingTop: '15px', borderTop: '1px solid var(--border-color)' }}>
                           <h4 style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 600, color: 'var(--primary-color)' }}>
-                            Rooms & Occupant Details
+                            {h.type === 'MESS' ? 'Plans' : 'Rooms'} & Occupant Details
                           </h4>
                           {!h.rooms || h.rooms.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No rooms added yet. Click "Add Room" to create one.</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No items added yet. Click "Add" to create one.</p>
                           ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                               {h.rooms.map(room => {
                                 const activeBooking = room.bookings && room.bookings[0];
+                                const roomVacancies = room.capacity - (room.bookings ? room.bookings.length : 0);
+                                const roomCollected = room.bookings ? room.bookings.reduce((bAcc, booking) => {
+                                  return bAcc + (booking.payments ? booking.payments.reduce((pAcc, payment) => pAcc + parseFloat(payment.amount), 0) : 0);
+                                }, 0) : 0;
                                 return (
                                   <div 
                                     key={room.id} 
@@ -377,33 +447,105 @@ function OwnerDashboard() {
                                         </div>
                                       )}
                                       <div>
-                                        <span style={{ fontWeight: 600, fontSize: '14px' }}>Room {room.roomNumber}</span>
-                                        <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '10px' }}>({room.roomType})</span>
-                                      
-                                      {room.status === 'OCCUPIED' && activeBooking ? (
-                                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '6px' }}>
-                                          👤 Tenant: <strong style={{ color: 'white' }}>{activeBooking.student.name}</strong>
-                                          <span style={{ marginLeft: '12px' }}>📅 Check-in: <strong style={{ color: 'white' }}>{new Date(activeBooking.startDate).toLocaleDateString()}</strong></span>
-                                          {activeBooking.student.phone && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>📞 Phone: {activeBooking.student.phone}</div>}
+                                        <div>
+                                          <span style={{ fontWeight: 600, fontSize: '14px' }}>{h.type === 'MESS' ? 'Plan' : 'Room'} {room.roomNumber}</span>
+                                          <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '10px' }}>({room.roomType})</span>
+                                          <span style={{ 
+                                            fontSize: '11px', 
+                                            padding: '2px 6px', 
+                                            borderRadius: '4px', 
+                                            marginLeft: '10px', 
+                                            background: roomVacancies > 0 ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
+                                            color: roomVacancies > 0 ? '#4ade80' : '#f87171',
+                                            fontWeight: 600
+                                          }}>
+                                            {roomVacancies > 0 ? `${roomVacancies} / ${room.capacity} Vacant` : '🔴 Full'}
+                                          </span>
                                         </div>
-                                      ) : (
-                                        <div style={{ fontSize: '12px', color: 'var(--success)', marginTop: '6px', fontWeight: 600 }}>
-                                          🟢 Available for Booking
-                                        </div>
-                                      )}
-                                    </div>
+                                        
+                                        {room.status === 'OCCUPIED' && activeBooking ? (
+                                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '6px' }}>
+                                            👤 Tenant: <strong style={{ color: 'white' }}>{activeBooking.student.name}</strong>
+                                            <span style={{ marginLeft: '12px' }}>📅 Check-in: <strong style={{ color: 'white' }}>{new Date(activeBooking.startDate).toLocaleDateString()}</strong></span>
+                                            {activeBooking.student.phone && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>📞 Phone: {activeBooking.student.phone}</div>}
+                                          </div>
+                                        ) : (
+                                          <div style={{ fontSize: '12px', color: 'var(--success)', marginTop: '6px', fontWeight: 600 }}>
+                                            🟢 Available for Booking
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
                                       <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--primary-color)' }}>
                                         ₹{room.pricePerMonth}
                                       </div>
                                       <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>/ month</span>
+                                      <div style={{ fontSize: '11px', color: 'var(--success)', marginTop: '4px', fontWeight: 600 }}>
+                                        Collected: ₹{roomCollected}
+                                      </div>
                                     </div>
                                   </div>
                                 );
                               })}
                             </div>
                           )}
+                          {/* Expenses Ledger Section */}
+                          <div style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px dashed var(--border-color)' }}>
+                            <h4 style={{ marginBottom: '15px', fontSize: '14px', fontWeight: 600, color: 'var(--danger)' }}>
+                              💸 Property Expenses Ledger
+                            </h4>
+
+                            {/* Expenses List */}
+                            {!h.expenses || h.expenses.length === 0 ? (
+                              <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '15px' }}>No expenses recorded for this property yet.</p>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px' }}>
+                                {h.expenses.map(exp => (
+                                  <div key={exp.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.01)', padding: '10px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.03)', fontSize: '13px' }}>
+                                    <div>
+                                      <strong style={{ color: 'white' }}>{exp.description}</strong>
+                                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{new Date(exp.date).toLocaleDateString()}</div>
+                                    </div>
+                                    <div style={{ fontWeight: 700, color: 'var(--danger)' }}>- ₹{exp.amount}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Add Expense Form */}
+                            <form onSubmit={(e) => handleExpenseSubmit(e, h.id)} style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                              <h5 style={{ marginBottom: '10px', fontSize: '12px', color: 'white', fontWeight: 600 }}>Record a New Expense</h5>
+                              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '10px', alignItems: 'end' }}>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                  <input 
+                                    type="text" 
+                                    className="form-control"
+                                    style={{ height: '38px', fontSize: '13px' }}
+                                    placeholder="Description (e.g. Electricity, Water)"
+                                    required
+                                    value={expenseDesc}
+                                    onChange={e => setExpenseDesc(e.target.value)}
+                                  />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                  <input 
+                                    type="number" 
+                                    className="form-control"
+                                    style={{ height: '38px', fontSize: '13px' }}
+                                    placeholder="Amount (₹)"
+                                    required
+                                    min="1"
+                                    value={expenseAmount}
+                                    onChange={e => setExpenseAmount(e.target.value)}
+                                  />
+                                </div>
+                                <button type="submit" className="btn btn-primary" style={{ height: '38px', fontSize: '12px', justifyContent: 'center' }}>
+                                  Add
+                                </button>
+                              </div>
+                            </form>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -444,6 +586,7 @@ function OwnerDashboard() {
                         <option value="HOSTEL">Hostel</option>
                         <option value="ROOM">Room (PG)</option>
                         <option value="FLAT">Flat / Apartment</option>
+                        <option value="MESS">Mess / Food Service Only</option>
                       </select>
                     </div>
                     <div>

@@ -116,6 +116,13 @@ const Api = {
 
     async getOwnerHostels() {
       return await request('/hostels/owner');
+    },
+
+    async addExpense(hostelId, expenseData) {
+      return await request(`/hostels/${hostelId}/expenses`, {
+        method: 'POST',
+        body: JSON.stringify(expenseData)
+      });
     }
   },
 

@@ -208,32 +208,38 @@ function HostelDetails() {
 
           {/* Rooms List */}
           <div>
-            <h3 style={{ marginBottom: '15px', fontSize: '20px' }}>Room Listings</h3>
+            <h3 style={{ marginBottom: '15px', fontSize: '20px' }}>{hostel.type === 'MESS' ? '🍽️ Mess Subscription Plans' : 'Room Listings'}</h3>
             {rooms.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)' }}>No rooms configured for this hostel yet.</p>
+              <p style={{ color: 'var(--text-muted)' }}>{hostel.type === 'MESS' ? 'No subscription plans configured for this mess yet.' : 'No rooms configured for this hostel yet.'}</p>
             ) : (
-              rooms.map((room) => (
-                <div key={room.id} className="room-item-card" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                  {room.imageUrl && (
-                    <div style={{ width: '100px', height: '80px', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden', flexShrink: 0 }}>
-                      <img src={room.imageUrl} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              rooms.map((room) => {
+                const roomVacancies = room.capacity - (room.bookings ? room.bookings.length : 0);
+                return (
+                  <div key={room.id} className="room-item-card" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                    {room.imageUrl && (
+                      <div style={{ width: '100px', height: '80px', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden', flexShrink: 0 }}>
+                        <img src={room.imageUrl} alt="Room" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{ fontSize: '16px', fontWeight: 600 }}>{hostel.type === 'MESS' ? 'Plan' : 'Room'} {room.roomNumber} ({room.roomType})</h4>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{hostel.type === 'MESS' ? 'Subscriber capacity:' : 'Capacity:'} {room.capacity} Person(s)</p>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '8px' }}>
+                        <span className={`status-pill ${roomVacancies > 0 ? 'status-available' : 'status-occupied'}`}>
+                          {roomVacancies > 0 ? 'AVAILABLE' : 'FULLY SUBSCRIBED'}
+                        </span>
+                        <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: roomVacancies > 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: roomVacancies > 0 ? '#4ade80' : '#f87171', fontWeight: 600 }}>
+                          {roomVacancies} / {room.capacity} Vacant
+                        </span>
+                      </div>
                     </div>
-                  )}
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{ fontSize: '16px', fontWeight: 600 }}>Room {room.roomNumber} ({room.roomType})</h4>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Capacity: {room.capacity} Person(s)</p>
-                    <div style={{ marginTop: '8px' }}>
-                      <span className={`status-pill ${room.status === 'AVAILABLE' ? 'status-available' : 'status-occupied'}`}>
-                        {room.status}
-                      </span>
+                    <div className="room-price-info" style={{ textAlign: 'right' }}>
+                      <div className="room-price">₹{room.pricePerMonth}</div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>per month</span>
                     </div>
                   </div>
-                  <div className="room-price-info" style={{ textAlign: 'right' }}>
-                    <div className="room-price">₹{room.pricePerMonth}</div>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>per month</span>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -242,7 +248,7 @@ function HostelDetails() {
         <div className="details-sidebar">
           <div className="booking-card">
             <h3 style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-              Reserve a Room
+              {hostel.type === 'MESS' ? 'Subscribe to Mess' : 'Reserve a Room'}
             </h3>
 
             {bookingError && (
@@ -260,13 +266,13 @@ function HostelDetails() {
             {availableRooms.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>
                 <Info size={32} style={{ marginBottom: '10px', color: 'var(--warning)' }} />
-                <p style={{ fontWeight: 600 }}>No Available Rooms</p>
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>This hostel is currently fully booked.</p>
+                <p style={{ fontWeight: 600 }}>{hostel.type === 'MESS' ? 'Plans Fully Booked' : 'No Available Rooms'}</p>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>This property is currently fully booked.</p>
               </div>
             ) : (
               <form onSubmit={handleBook}>
                 <div className="form-group">
-                  <label htmlFor="roomSelect">Select Room</label>
+                  <label htmlFor="roomSelect">{hostel.type === 'MESS' ? 'Select Plan' : 'Select Room'}</label>
                   <select
                     id="roomSelect"
                     className="form-control form-select"
@@ -276,14 +282,14 @@ function HostelDetails() {
                   >
                     {availableRooms.map((room) => (
                       <option key={room.id} value={room.id}>
-                        Room {room.roomNumber} - {room.roomType} (₹{room.pricePerMonth}/mo)
+                        {hostel.type === 'MESS' ? 'Plan' : 'Room'} {room.roomNumber} - {room.roomType} (₹{room.pricePerMonth}/mo)
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="startDate">Check-In Date</label>
+                  <label htmlFor="startDate">{hostel.type === 'MESS' ? 'Subscription Start Date' : 'Check-In Date'}</label>
                   <input
                     type="date"
                     id="startDate"
@@ -295,7 +301,7 @@ function HostelDetails() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="endDate">Check-Out Date</label>
+                  <label htmlFor="endDate">{hostel.type === 'MESS' ? 'Subscription End Date' : 'Check-Out Date'}</label>
                   <input
                     type="date"
                     id="endDate"
@@ -312,13 +318,13 @@ function HostelDetails() {
                   style={{ width: '100%', justifyContent: 'center', marginTop: '15px' }}
                   disabled={bookingLoading}
                 >
-                  {bookingLoading ? 'Sending Request...' : 'Send Booking Request'}
+                  {bookingLoading ? 'Sending Request...' : (hostel.type === 'MESS' ? 'Send Subscription Request' : 'Send Booking Request')}
                 </button>
               </form>
             )}
 
             <div style={{ marginTop: '20px', fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-              ℹ️ Sending a request does not charge your account. Upon owner's approval, a security deposit invoice and monthly rent invoices will be generated.
+              ℹ️ Sending a request does not charge your account. Upon owner's approval, monthly invoices will be generated for the selection.
             </div>
           </div>
         </div>
